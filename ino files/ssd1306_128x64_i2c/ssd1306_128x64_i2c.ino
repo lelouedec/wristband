@@ -1,20 +1,4 @@
-/*********************************************************************
-This is an example for our Monochrome OLEDs based on SSD1306 drivers
 
-  Pick one up today in the adafruit shop!
-  ------> http://www.adafruit.com/category/63_98
-
-This example is for a 128x64 size display using I2C to communicate
-3 pins are required to interface (2 I2C and one reset)
-
-Adafruit invests time and resources providing this open source code, 
-please support Adafruit and open-source hardware by purchasing 
-products from Adafruit!
-
-Written by Limor Fried/Ladyada  for Adafruit Industries.  
-BSD license, check license.txt for more information
-All text above, and the splash screen must be included in any redistribution
-*********************************************************************/
 #include <Arduino.h>
 #include <SPI.h>
 #include <string.h>
@@ -35,6 +19,7 @@ All text above, and the splash screen must be included in any redistribution
 #include <CN_SSD1306_Wire.h>
 
 #include "codetab.c"
+#include "Bitmaps.h"
 
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -134,7 +119,7 @@ void setup()
   if ( FACTORYRESET_ENABLE )
   {
     /* Perform a factory reset to make sure everything is in a known state */
-   writeToScreen("Performing a factory reset: ");
+   writeToScreen("Performing a factory reset");
    delay(500);
     if ( ! ble.factoryReset() ){
       writeToScreen("Couldn't factory reset");
@@ -144,9 +129,10 @@ void setup()
   /* Disable command echo from Bluefruit */
   ble.echo(false);
   ble.verbose(false);  // debug info is a little annoying after this point!
-  
-  writeToScreen("Waiting For Connection...");
+    
   display.clearDisplay();
+  display.drawBitmap(0, 0, fan_off, 30,30,1);
+  display.display();
   /* Wait for connection */
   while (! ble.isConnected()) {
       delay(500);
@@ -159,7 +145,7 @@ void setup()
 
   // Set module to DATA mode
   ble.setMode(BLUEFRUIT_MODE_DATA);
-  display.clearDisplay();
+  //display.clearDisplay();
 
 }
 String val;
@@ -195,10 +181,13 @@ void loop() {
   }else{
     val2="";
     val="";
-    writeToScreen("Waiting For Connection...");
+    display.drawBitmap(10, 10, pokemon1, 30,30,1);
   }
 
 }
+
+
+
 
 
 void DisplayNotif(String notif){
@@ -258,11 +247,3 @@ void writeToScreen(String val){
   display.println(val);
   display.display();
 }
-
-
-
-
-
-
-
-

@@ -20,6 +20,8 @@
 
 #include "codetab.c"
 #include "Bitmaps.h"
+#include "max30102.h"
+
 
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -29,6 +31,8 @@ CN_SSD1306_Wire lucky(OLED_RESET);
 #define XPOS 0
 #define YPOS 1
 #define DELTAY 2
+//CN_SSD1306_Wire lucky(OLED_RESET);
+
 
 /*=========================================================================
     APPLICATION SETTINGS
@@ -86,15 +90,11 @@ Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_
 //                             BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
 
-// A small helper
-void error(const __FlashStringHelper*err) {
-  Serial.println(err);
-  while (1);
-}
+
 
 #define VBATPIN A9
-
-
+#define BUFFER_SIZE (100) 
+const byte oxiInt = 10; // pin connected to MAX30102 INT
 
 
 
@@ -104,24 +104,38 @@ void error(const __FlashStringHelper*err) {
 
 void setup()
 {
-  
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C,true);
-  display.clearDisplay();
-  writeToScreen("Initialising the Bluefruit LE module");
-  delay(500);
-   if ( !ble.begin(VERBOSE_MODE) )
+  uint32_t aun_red_buffer[BUFFER_SIZE]; 
+  uint32_t aun_ir_buffer[BUFFER_SIZE];
+  uint8_t uch_dummy,k;
+  maxim_max30102_reset(); //resets the MAX30102
+  delay(1000);
+  maxim_max30102_read_reg(REG_INTR_STATUS_1,&uch_dummy);  //Reads/clears the interrupt status register
+  maxim_max30102_init(); //initialize the MAX30102
+  int i;
+  for(i=0;i<BUFFER_SIZE;i++)
+  {
+    while(digitalRead(oxiInt)==1);  //wait until the interrupt pin asserts
+      maxim_max30102_read_fifo((aun_red_buffer+i), (aun_ir_buffer+i)); //read from MAX30102 FIFO
+    Serial.print(i, DEC);
+    Serial.print(F("\t"));
+    Serial.print(aun_red_buffer[i], DEC);
+    Serial.print(F("\t"));
+    Serial.print(aun_ir_buffer[i], DEC);    
+    Serial.println("");
+    //display.clearDisplay();
+  }
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.display();
+  delay(2000);
+  if ( !ble.begin(VERBOSE_MODE) )
   {
    writeToScreen("Couldn't find Bluefruit, make sure it's in CoMmanD mode & check wiring?");
      delay(2000);
        display.clearDisplay();
-
   }
   if ( FACTORYRESET_ENABLE )
   {
-    /* Perform a factory reset to make sure everything is in a known state */
-   writeToScreen("Performing a factory reset");
-   delay(500);
-    if ( ! ble.factoryReset() ){
+   if ( ! ble.factoryReset() ){
       writeToScreen("Couldn't factory reset");
     }
   }
@@ -131,11 +145,14 @@ void setup()
   ble.verbose(false);  // debug info is a little annoying after this point!
     
   display.clearDisplay();
-  display.drawBitmap(0, 0, fan_off, 30,30,1);
+  // miniature bitmap display
+  display.drawBitmap(30, 16,  logo16_glcd_bmp, 16, 16, 1);
   display.display();
+  delay(1);
   /* Wait for connection */
   while (! ble.isConnected()) {
-      delay(500);
+    writeToScreen("Hello");
+    delay(1);
   }
   if ( ble.isVersionAtLeast(MINIMUM_FIRMWARE_VERSION) )
   {
@@ -181,7 +198,7 @@ void loop() {
   }else{
     val2="";
     val="";
-    display.drawBitmap(10, 10, pokemon1, 30,30,1);
+    writeToScreen("Sup' ? ");
   }
 
 }

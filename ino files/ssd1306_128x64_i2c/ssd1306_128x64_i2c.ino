@@ -117,11 +117,10 @@ void setup()
     while(digitalRead(oxiInt)==1);  //wait until the interrupt pin asserts
       maxim_max30102_read_fifo((aun_red_buffer+i), (aun_ir_buffer+i)); //read from MAX30102 FIFO
     Serial.print(i, DEC);
-    Serial.print(F("\t"));
     Serial.print(aun_red_buffer[i], DEC);
-    Serial.print(F("\t"));
-    Serial.print(aun_ir_buffer[i], DEC);    
-    Serial.println("");
+//    Serial.print(F("\t"));
+//    Serial.print(aun_ir_buffer[i], DEC);    
+//    Serial.println("");
     //display.clearDisplay();
   }
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
